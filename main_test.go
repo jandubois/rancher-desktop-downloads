@@ -117,3 +117,47 @@ func TestRecordDownloadData(t *testing.T) {
 // The original function is fine, but for testing this is a common pattern.
 // The alternative is to pass dataDir as an argument, which is a bigger change.
 // Let's stick with the global override for now as it's confined to the test.
+
+func TestGenerateStatistics(t *testing.T) {
+	assetDownloads := map[string]int{
+		"asset-1": 100,
+		"asset-2": 200,
+		"asset-3": 50,
+		"asset-4": 300,
+		"asset-5": 150,
+		"asset-6": 250,
+		"asset-7": 500,
+		"asset-8": 400,
+		"asset-9": 350,
+		"asset-10": 450,
+		"asset-11": 50,
+	}
+
+	err := generateStatistics(assetDownloads)
+	if err != nil {
+		t.Fatalf("generateStatistics failed: %v", err)
+	}
+
+	// Read the generated file
+	content, err := os.ReadFile("daily_stats.txt")
+	if err != nil {
+		t.Fatalf("Failed to read daily_stats.txt: %v", err)
+	}
+	defer os.Remove("daily_stats.txt")
+
+			expectedContent := "Total asset downloads today: 2800\n\n" +
+			"Top 10 assets by download count:\n" +
+			"- asset-7: 500\n" +
+			"- asset-10: 450\n" +
+			"- asset-8: 400\n" +
+			"- asset-9: 350\n" +
+			"- asset-4: 300\n" +
+			"- asset-6: 250\n" +
+			"- asset-2: 200\n" +
+			"- asset-5: 150\n" +
+			"- asset-1: 100\n" +
+			"- asset-11: 50\n"
+		if string(content) != expectedContent {
+		t.Errorf("Unexpected content in daily_stats.txt.\nGot:\n%s\nExpected:\n%s", string(content), expectedContent)
+	}
+}

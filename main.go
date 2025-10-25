@@ -186,6 +186,9 @@ func generateStatistics(allAssetDownloads map[string]int) error {
 	}
 
 	sort.Slice(assetStats, func(i, j int) bool {
+		if assetStats[i].DownloadCount == assetStats[j].DownloadCount {
+			return assetStats[i].Name < assetStats[j].Name
+		}
 		return assetStats[i].DownloadCount > assetStats[j].DownloadCount
 	})
 
