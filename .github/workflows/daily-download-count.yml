@@ -8,9 +8,13 @@ on:
 jobs:
   update-download-counts:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: data
 
       - name: Set up Go
         uses: actions/setup-go@v5
