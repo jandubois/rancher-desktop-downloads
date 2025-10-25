@@ -27,12 +27,12 @@ jobs:
       - name: Run download counter
         run: |
           cd data-worktree
-          go run ../main.go
+          go run ../cmd/github_analytics.go
 
       - name: Run Homebrew analytics collector
         run: |
           cd data-worktree
-          go run ../brew_analytics.go
+          go run ../cmd/brew_analytics.go
 
       - name: Show Stats
         run: cat data-worktree/daily_stats.txt

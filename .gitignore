@@ -14,6 +14,6 @@
 # Go workspace file
 go.work
 
-# Compiled binary
-rancher-desktop-downloads
-main
+# Compiled binaries
+github_analytics
+brew_analytics
