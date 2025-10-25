@@ -37,6 +37,7 @@ jobs:
       - name: Commit and push changes
         run: |
           cd data
+          git checkout data
           git add .
           if git diff --staged --quiet; then
             echo "No changes to commit"
