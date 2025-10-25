@@ -13,6 +13,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -20,8 +22,7 @@ jobs:
           go-version: '1.25'
 
       - name: Setup git worktree for data branch
-        run: |
-          git worktree add data data
+        run: git worktree add data origin/data
 
       - name: Run download counter
         run: go run main.go
