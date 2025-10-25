@@ -25,10 +25,12 @@ jobs:
         run: git worktree add data-worktree origin/data
 
       - name: Run download counter
-        run: go run main.go
+        run: |
+          cd data-worktree
+          go run ../main.go
 
       - name: Show Stats
-        run: cat daily_stats.txt
+        run: cat data-worktree/daily_stats.txt
 
       - name: Configure git
         run: |
@@ -43,6 +45,6 @@ jobs:
             echo "No changes to commit"
             exit 0
           fi
-          COMMIT_MSG=$(cat ../daily_stats.txt)
+          COMMIT_MSG=$(cat daily_stats.txt)
           git commit -m "chore: Update download counts" -m "$COMMIT_MSG"
           git push
