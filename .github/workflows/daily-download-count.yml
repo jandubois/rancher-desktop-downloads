@@ -29,6 +29,11 @@ jobs:
           cd data-worktree
           go run ../main.go
 
+      - name: Run Homebrew analytics collector
+        run: |
+          cd data-worktree
+          go run ../brew_analytics.go
+
       - name: Show Stats
         run: cat data-worktree/daily_stats.txt
 
