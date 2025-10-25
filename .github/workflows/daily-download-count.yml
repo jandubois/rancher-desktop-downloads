@@ -37,7 +37,7 @@ jobs:
       - name: Commit and push changes
         run: |
           cd data-worktree
-          git checkout data
+          git checkout -- data
           git add .
           if git diff --staged --quiet; then
             echo "No changes to commit"
