@@ -82,3 +82,36 @@ To better capture download data from the Americas, the daily execution time and 
 
 -   **Schedule:** The GitHub Actions workflow is scheduled to run at midnight Pacific Time (`0 8 * * *` UTC).
 -   **Timezone:** The Go script now uses the `America/Los_Angeles` timezone to record the date for the download counts. This ensures that all downloads for a given day in the Americas are attributed to the same day.
+
+## 8. Phase 4: Homebrew Analytics
+
+To gain more insight into the distribution of Rancher Desktop, this phase will focus on collecting and storing Homebrew installation analytics.
+
+### 8.1. Goal
+
+The goal of this phase is to track the installation trends of Rancher Desktop on Homebrew over time.
+
+### 8.2. Data Source
+
+The analytics data will be fetched from the Homebrew API. The data is available in a JSON file for each cask. For Rancher Desktop, the URL is `https://formulae.brew.sh/api/cask/rancher.json`.
+
+The API provides the total number of installations over sliding windows of 30, 90, and 365 days. It is not possible to derive daily download numbers from this data. The data is also aggregated and does not provide a breakdown by platform or architecture.
+
+### 8.3. Implementation Details
+
+1.  **New Go Program:**
+    -   A new Go program, `brew_analytics.go`, will be created to fetch and process the Homebrew analytics data.
+    -   The program will fetch the JSON data from the Homebrew API.
+    -   It will parse the JSON and extract the 30, 90, and 365-day installation counts.
+
+2.  **Data Storage:**
+    -   The data will be stored in a new CSV file, `data/homebrew_analytics.csv`.
+    -   The CSV file will have the following columns:
+        -   `date`: The date of data capture (YYYY-MM-DD).
+        -   `30d`: The total installations in the last 30 days.
+        -   `90d`: The total installations in the last 90 days.
+        -   `365d`: The total installations in the last 365 days.
+
+3.  **GitHub Actions Workflow Modifications:**
+    -   The existing GitHub Actions workflow will be updated to run the new `brew_analytics.go` program daily.
+    -   The workflow will commit the updated `data/homebrew_analytics.csv` file to the `data` branch.
