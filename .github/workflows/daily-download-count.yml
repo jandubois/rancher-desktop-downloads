@@ -40,7 +40,6 @@ jobs:
         run: |
           cd data-worktree
           git status --untracked-files=all
-          git checkout -- data
           git add .
           if git diff --staged --quiet; then
             echo "No changes to commit"
