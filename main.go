@@ -18,7 +18,7 @@ import (
 var (
 	repoOwner      = "rancher-sandbox"
 	repoName       = "rancher-desktop"
-	dataDir        = "."
+	dataDir        = "data"
 	sha512sumSuffix = ".sha512sum"
 	pacificTZ      *time.Location
 )
