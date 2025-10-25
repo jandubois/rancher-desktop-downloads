@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -19,7 +20,17 @@ var (
 	repoName       = "rancher-desktop"
 	dataDir        = "data"
 	sha512sumSuffix = ".sha512sum"
+	pacificTZ      *time.Location
 )
+
+func init() {
+	var err error
+	pacificTZ, err = time.LoadLocation("America/Los_Angeles")
+	if err != nil {
+		fmt.Printf("Error loading location: %v\n", err)
+		os.Exit(1)
+	}
+}
 
 // Release represents a GitHub release.
 type Release struct {
@@ -59,18 +70,19 @@ func main() {
 	}
 
 	fmt.Printf("Found %d releases. Processing assets...\n", len(releases))
-	allAssetDownloads := make(map[string]int)
+	dailyAssetDownloads := make(map[string]int)
 	for _, release := range releases {
 		assetPairs := pairAssets(release.Assets)
 		for assetName, data := range assetPairs {
-			allAssetDownloads[assetName] = data.AssetDownloads
-			if err := recordDownloadData(assetName, data); err != nil {
+			dailyDownloads, err := recordDownloadData(assetName, data)
+			if err != nil {
 				fmt.Printf("Error recording data for %s: %v\n", assetName, err)
 			}
+			dailyAssetDownloads[assetName] = dailyDownloads
 		}
 	}
 
-	if err := generateStatistics(allAssetDownloads); err != nil {
+	if err := generateStatistics(dailyAssetDownloads); err != nil {
 		fmt.Printf("Error generating statistics: %v\n", err)
 	}
 
@@ -125,33 +137,45 @@ func pairAssets(assets []Asset) map[string]DownloadData {
 	return pairs
 }
 
-// recordDownloadData writes the download data to the appropriate CSV file.
-func recordDownloadData(assetName string, data DownloadData) error {
+// recordDownloadData writes the download data to the appropriate CSV file and returns the daily download count.
+func recordDownloadData(assetName string, data DownloadData) (int, error) {
 	filePath := filepath.Join(dataDir, assetName+".csv")
-	today := time.Now().UTC().Format("2006-01-02")
+	today := time.Now().In(pacificTZ).Format("2006-01-02")
+	dailyDownloads := 0
 
 	// Read existing data
 	file, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE, 0644)
 	if err != nil {
-		return fmt.Errorf("failed to open file: %w", err)
+		return 0, fmt.Errorf("failed to open file: %w", err)
 	}
 	defer file.Close()
 
 	reader := csv.NewReader(file)
 	records, err := reader.ReadAll()
 	if err != nil {
-		return fmt.Errorf("failed to read csv records: %w", err)
+		return 0, fmt.Errorf("failed to read csv records: %w", err)
 	}
 
 	// Check if file is new, write header if so
-	if len(records) == 0 {
-		records = append(records, []string{"date", "asset_downloads", "sha512sum_downloads"})
+	if len(records) <= 1 {
+		records = [][]string{{"date", "asset_downloads", "sha512sum_downloads"}}
+		dailyDownloads = data.AssetDownloads
 	} else {
 		// Check the last record
 		lastRecord := records[len(records)-1]
 		if lastRecord[0] == today {
 			// Same day, overwrite last record
 			records = records[:len(records)-1]
+			if len(records) > 1 {
+				prevRecord := records[len(records)-1]
+				prevDownloads, _ := strconv.Atoi(prevRecord[1])
+				dailyDownloads = data.AssetDownloads - prevDownloads
+			} else {
+				dailyDownloads = data.AssetDownloads
+			}
+		} else {
+			prevDownloads, _ := strconv.Atoi(lastRecord[1])
+			dailyDownloads = data.AssetDownloads - prevDownloads
 		}
 	}
 
@@ -161,27 +185,27 @@ func recordDownloadData(assetName string, data DownloadData) error {
 
 	// Write all records back to the file
 	if err := file.Truncate(0); err != nil {
-        return fmt.Errorf("failed to truncate file: %w", err)
-    }
-    if _, err := file.Seek(0, 0); err != nil {
-        return fmt.Errorf("failed to seek file: %w", err)
-    }
+		return 0, fmt.Errorf("failed to truncate file: %w", err)
+	}
+	if _, err := file.Seek(0, 0); err != nil {
+		return 0, fmt.Errorf("failed to seek file: %w", err)
+	}
 
 	writer := csv.NewWriter(file)
 	if err := writer.WriteAll(records); err != nil {
-		return fmt.Errorf("failed to write csv records: %w", err)
+		return 0, fmt.Errorf("failed to write csv records: %w", err)
 	}
 
-	return nil
+	return dailyDownloads, nil
 }
 
 // generateStatistics calculates and writes download statistics.
-func generateStatistics(allAssetDownloads map[string]int) error {
-	totalDownloads := 0
-	assetStats := make([]AssetDownloadStat, 0, len(allAssetDownloads))
+func generateStatistics(dailyAssetDownloads map[string]int) error {
+	totalDailyDownloads := 0
+	assetStats := make([]AssetDownloadStat, 0, len(dailyAssetDownloads))
 
-	for name, count := range allAssetDownloads {
-		totalDownloads += count
+	for name, count := range dailyAssetDownloads {
+		totalDailyDownloads += count
 		assetStats = append(assetStats, AssetDownloadStat{Name: name, DownloadCount: count})
 	}
 
@@ -198,8 +222,8 @@ func generateStatistics(allAssetDownloads map[string]int) error {
 	}
 	defer statsFile.Close()
 
-	statsFile.WriteString(fmt.Sprintf("Total asset downloads today: %d\n\n", totalDownloads))
-	statsFile.WriteString("Top 10 assets by download count:\n")
+	statsFile.WriteString(fmt.Sprintf("Total asset downloads today: %d\n\n", totalDailyDownloads))
+	statsFile.WriteString("Top 10 assets by daily download count:\n")
 	for i := 0; i < 10 && i < len(assetStats); i++ {
 		statsFile.WriteString(fmt.Sprintf("- %s: %d\n", assetStats[i].Name, assetStats[i].DownloadCount))
 	}

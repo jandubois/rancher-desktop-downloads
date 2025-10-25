@@ -46,26 +46,30 @@ This structure allows for easy manual inspection of the data for a specific asse
         - Run the Go script.
         - Commit any changes to the `data/` directory back to the repository.
 
-## 5. Phase 3: Enhanced Commit Messages with Statistics
+## 5. Phase 3: Enhanced Commit Messages with Daily Statistics
 
-To make the daily commit messages more informative, the Go script will be enhanced to generate statistics about the download counts. These statistics will be used in the body of the commit message.
+To make the daily commit messages more informative, the Go script has been enhanced to generate statistics about the daily download counts. These statistics are used in the body of the commit message.
 
 ### 5.1. Statistics to Collect
 
-- **Total Daily Downloads:** The script will calculate the total number of downloads for all main assets (excluding `.sha512sum` files) for the current day.
-- **Top 10 Assets:** The script will identify the top 10 assets with the highest download counts for the current day.
+- **Total Daily Downloads:** The script calculates the total number of downloads for all main assets (excluding `.sha512sum` files) for the current day.
+- **Top 10 Assets by Daily Downloads:** The script identifies the top 10 assets with the highest download counts for the current day.
 
 ### 5.2. Implementation Details
 
 1.  **Go Script Modifications:**
-    - The `main` function will be updated to calculate the total downloads and the top 10 assets after fetching and processing all the release data.
-    - The script will write these statistics to a new file, for example, `daily_stats.txt`.
+    - The `recordDownloadData` function was updated to calculate the daily download count by subtracting the previous day's total downloads.
+    - The `main` function was updated to collect these daily download counts.
+    - The `generateStatistics` function was updated to work with daily download counts.
+    - The script writes these statistics to a new file, `daily_stats.txt`.
 
 2.  **GitHub Actions Workflow Modifications:**
-    - The workflow will be updated to read the content of `daily_stats.txt`.
-    - The content of the file will be used as the body of the commit message.
+    - The workflow is updated to read the content of `daily_stats.txt`.
+    - The content of the file is used as the body of the commit message.
 
-### 5.3. Other Suggested Statistics
+## 6. Timezone and Schedule
 
-- **New Assets:** The script could also identify and list any new assets that were added since the last run.
-- **Growth Leaders:** The script could highlight the assets with the highest percentage growth in downloads since the last run.
+To better capture download data from the Americas, the daily execution time and the timezone used for recording data have been updated.
+
+- **Schedule:** The GitHub Actions workflow is scheduled to run at midnight Pacific Time (`0 8 * * *` UTC).
+- **Timezone:** The Go script now uses the `America/Los_Angeles` timezone to record the date for the download counts. This ensures that all downloads for a given day in the Americas are attributed to the same day.
