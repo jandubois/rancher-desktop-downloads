@@ -24,6 +24,9 @@ jobs:
       - name: Run download counter
         run: go run main.go
 
+      - name: Show Stats
+        run: cat daily_stats.txt
+
       - name: Configure git
         run: |
           git config --global user.name 'GitHub Actions'
