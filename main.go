@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 )
@@ -38,6 +39,12 @@ type DownloadData struct {
 	ChecksumDownloads int
 }
 
+// AssetDownloadStat holds the name and download count of an asset.
+type AssetDownloadStat struct {
+	Name          string
+	DownloadCount int
+}
+
 func main() {
 	fmt.Println("Fetching release information...")
 	releases, err := fetchReleases()
@@ -52,14 +59,21 @@ func main() {
 	}
 
 	fmt.Printf("Found %d releases. Processing assets...\n", len(releases))
+	allAssetDownloads := make(map[string]int)
 	for _, release := range releases {
 		assetPairs := pairAssets(release.Assets)
 		for assetName, data := range assetPairs {
+			allAssetDownloads[assetName] = data.AssetDownloads
 			if err := recordDownloadData(assetName, data); err != nil {
 				fmt.Printf("Error recording data for %s: %v\n", assetName, err)
 			}
 		}
 	}
+
+	if err := generateStatistics(allAssetDownloads); err != nil {
+		fmt.Printf("Error generating statistics: %v\n", err)
+	}
+
 	fmt.Println("Processing complete.")
 }
 
@@ -156,6 +170,35 @@ func recordDownloadData(assetName string, data DownloadData) error {
 	writer := csv.NewWriter(file)
 	if err := writer.WriteAll(records); err != nil {
 		return fmt.Errorf("failed to write csv records: %w", err)
+	}
+
+	return nil
+}
+
+// generateStatistics calculates and writes download statistics.
+func generateStatistics(allAssetDownloads map[string]int) error {
+	totalDownloads := 0
+	assetStats := make([]AssetDownloadStat, 0, len(allAssetDownloads))
+
+	for name, count := range allAssetDownloads {
+		totalDownloads += count
+		assetStats = append(assetStats, AssetDownloadStat{Name: name, DownloadCount: count})
+	}
+
+	sort.Slice(assetStats, func(i, j int) bool {
+		return assetStats[i].DownloadCount > assetStats[j].DownloadCount
+	})
+
+	statsFile, err := os.Create("daily_stats.txt")
+	if err != nil {
+		return fmt.Errorf("failed to create statistics file: %w", err)
+	}
+	defer statsFile.Close()
+
+	statsFile.WriteString(fmt.Sprintf("Total asset downloads today: %d\n\n", totalDownloads))
+	statsFile.WriteString("Top 10 assets by download count:\n")
+	for i := 0; i < 10 && i < len(assetStats); i++ {
+		statsFile.WriteString(fmt.Sprintf("- %s: %d\n", assetStats[i].Name, assetStats[i].DownloadCount))
 	}
 
 	return nil

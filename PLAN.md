@@ -45,3 +45,27 @@ This structure allows for easy manual inspection of the data for a specific asse
         - Set up the Go environment.
         - Run the Go script.
         - Commit any changes to the `data/` directory back to the repository.
+
+## 5. Phase 3: Enhanced Commit Messages with Statistics
+
+To make the daily commit messages more informative, the Go script will be enhanced to generate statistics about the download counts. These statistics will be used in the body of the commit message.
+
+### 5.1. Statistics to Collect
+
+- **Total Daily Downloads:** The script will calculate the total number of downloads for all main assets (excluding `.sha512sum` files) for the current day.
+- **Top 10 Assets:** The script will identify the top 10 assets with the highest download counts for the current day.
+
+### 5.2. Implementation Details
+
+1.  **Go Script Modifications:**
+    - The `main` function will be updated to calculate the total downloads and the top 10 assets after fetching and processing all the release data.
+    - The script will write these statistics to a new file, for example, `daily_stats.txt`.
+
+2.  **GitHub Actions Workflow Modifications:**
+    - The workflow will be updated to read the content of `daily_stats.txt`.
+    - The content of the file will be used as the body of the commit message.
+
+### 5.3. Other Suggested Statistics
+
+- **New Assets:** The script could also identify and list any new assets that were added since the last run.
+- **Growth Leaders:** The script could highlight the assets with the highest percentage growth in downloads since the last run.
