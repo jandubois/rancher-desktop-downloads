@@ -1,10 +1,10 @@
-Total asset downloads today: 4334047
+Total asset downloads today: 4334061
 
 Top 10 assets by daily download count:
 - Rancher.Desktop.Setup.1.18.2.msi: 239850
 - Rancher.Desktop.Setup.1.16.0.msi: 219172
 - Rancher.Desktop.Setup.1.19.3.msi: 160144
-- Rancher.Desktop.Setup.1.20.0.msi: 152860
+- Rancher.Desktop.Setup.1.20.0.msi: 152868
 - Rancher.Desktop.Setup.1.13.1.msi: 132661
 - Rancher.Desktop.Setup.1.15.1.msi: 107958
 - Rancher.Desktop-1.19.3-mac.aarch64.zip: 97164
