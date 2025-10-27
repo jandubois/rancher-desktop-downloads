@@ -38,7 +38,9 @@ This structure allows for easy manual inspection of the data for a specific asse
 
 ## 5. Development Phases
 
-1.  **Phase 1: Local Script Development (Current Phase)**
+This project was developed in several phases. The initial development is complete, and the project is now in a maintenance phase.
+
+1.  **Phase 1: Local Script Development**
     - Create this `PLAN.md` document.
     - Develop the Go script (`main.go`) to implement the data fetching and file writing logic.
     - Write unit tests for the file writing logic to ensure correctness.
@@ -99,19 +101,19 @@ The API provides the total number of installations over sliding windows of 30, 9
 
 ### 8.3. Implementation Details
 
-1.  **New Go Program:**
-    -   A new Go program, `brew_analytics.go`, will be created to fetch and process the Homebrew analytics data.
-    -   The program will fetch the JSON data from the Homebrew API.
-    -   It will parse the JSON and extract the 30, 90, and 365-day installation counts.
+1.  **Go Program:**
+    -   A Go program, `cmd/brew/main.go`, fetches and processes the Homebrew analytics data.
+    -   The program fetches the JSON data from the Homebrew API.
+    -   It parses the JSON and extracts the 30, 90, and 365-day installation counts.
 
 2.  **Data Storage:**
-    -   The data will be stored in a new CSV file, `data/homebrew_analytics.csv`.
-    -   The CSV file will have the following columns:
+    -   The data is stored in a new CSV file, `data/homebrew_analytics.csv`.
+    -   The CSV file has the following columns:
         -   `date`: The date of data capture (YYYY-MM-DD).
         -   `30d`: The total installations in the last 30 days.
         -   `90d`: The total installations in the last 90 days.
         -   `365d`: The total installations in the last 365 days.
 
 3.  **GitHub Actions Workflow Modifications:**
-    -   The existing GitHub Actions workflow will be updated to run the new `brew_analytics.go` program daily.
-    -   The workflow will commit the updated `data/homebrew_analytics.csv` file to the `data` branch.
+    -   The existing GitHub Actions workflow runs the `cmd/brew/main.go` program daily.
+    -   The workflow commits the updated `data/homebrew_analytics.csv` file to the `data` branch.
