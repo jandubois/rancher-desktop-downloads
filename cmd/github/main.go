@@ -66,7 +66,22 @@ func main() {
 
 // fetchReleases fetches all releases from the GitHub API.
 func fetchReleases() ([]Release, error) {
-	resp, err := http.Get(apiURL)
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", apiURL, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	token := os.Getenv("GH_TOKEN")
+	if token == "" {
+		token = os.Getenv("GITHUB_TOKEN")
+	}
+
+	if token != "" {
+		req.Header.Set("Authorization", "Bearer "+token)
+	}
+
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get release data: %w", err)
 	}

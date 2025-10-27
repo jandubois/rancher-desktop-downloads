@@ -25,6 +25,8 @@ jobs:
         run: git worktree add -b data data-worktree origin/data
 
       - name: Run download counter
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           cd data-worktree
           go run ../cmd/github/main.go
