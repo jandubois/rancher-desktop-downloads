@@ -42,7 +42,7 @@ A separate CSV file is created for each release asset (e.g., `data/rancher-deskt
 
 ### 3.2. Homebrew Analytics
 
-The Homebrew analytics data is stored in `data/homebrew_analytics.csv`. This file contains the following columns:
+A separate CSV file is created for each Homebrew package (e.g., `data/rancher-cask.csv`, `data/lima-formula.csv`). Each file contains the following columns:
 
 -   `date`: The date of data capture (YYYY-MM-DD).
 -   `30d`: The total installations in the last 30 days.
@@ -57,7 +57,7 @@ The `cmd/github/main.go` program fetches all releases for the `rancher-sandbox/r
 
 ### 4.2. Homebrew Analytics
 
-The `cmd/brew/main.go` program fetches the JSON data from the Homebrew API, parses it, and extracts the 30, 90, and 365-day installation counts.
+The `cmd/brew/main.go` program fetches the JSON data for a predefined list of Homebrew casks and formulae. It then parses the data and extracts the 30, 90, and 365-day installation counts for each package.
 
 ### 4.3. Commit Message Generation
 
