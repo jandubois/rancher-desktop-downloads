@@ -27,7 +27,7 @@ jobs:
       - name: Run download counter
         run: |
           cd data-worktree
-          go run ../cmd/github_analytics.go
+          go run ../cmd/github/main.go
 
       - name: Run Homebrew analytics collector
         run: |
