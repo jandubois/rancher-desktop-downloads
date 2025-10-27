@@ -1,5 +1,5 @@
 
-package main
+package data_test
 
 import (
 	"encoding/csv"
@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"testing"
 	"time"
+
+	"rancher-desktop-downloads/internal/data"
 )
 
 // Helper function to check CSV content
@@ -45,20 +47,20 @@ func checkCSV(t *testing.T, path string, expected [][]string) {
 func TestRecordDownloadData(t *testing.T) {
 	tempDir := t.TempDir()
 	// Override the dataDir for testing purposes
-	originalDataDir := dataDir
-	dataDir = tempDir
-	t.Cleanup(func() { dataDir = originalDataDir })
+	originalDataDir := data.DataDir
+	data.DataDir = tempDir
+	t.Cleanup(func() { data.DataDir = originalDataDir })
 
-	today := time.Now().UTC().Format("2006-01-02")
-	yesterday := time.Now().UTC().AddDate(0, 0, -1).Format("2006-01-02")
+	today := time.Now().In(data.PacificTZ).Format("2006-01-02")
+	yesterday := time.Now().In(data.PacificTZ).AddDate(0, 0, -1).Format("2006-01-02")
 
 	assetName := "test-asset-1.0.0.zip"
 	filePath := filepath.Join(tempDir, assetName+".csv")
 
 	t.Run("NewFile", func(t *testing.T) {
-		data := DownloadData{AssetDownloads: 100, ChecksumDownloads: 10}
-		if err := recordDownloadData(assetName, data); err != nil {
-			t.Fatalf("recordDownloadData failed: %v", err)
+		downloadData := data.DownloadData{AssetDownloads: 100, ChecksumDownloads: 10}
+		if _, err := data.RecordDownloadData(assetName, downloadData); err != nil {
+			t.Fatalf("RecordDownloadData failed: %v", err)
 		}
 
 		expected := [][]string{
@@ -70,9 +72,9 @@ func TestRecordDownloadData(t *testing.T) {
 
 	t.Run("ReplaceData", func(t *testing.T) {
 		// This should replace the line from the previous test
-		data := DownloadData{AssetDownloads: 150, ChecksumDownloads: 15}
-		if err := recordDownloadData(assetName, data); err != nil {
-			t.Fatalf("recordDownloadData failed: %v", err)
+		downloadData := data.DownloadData{AssetDownloads: 150, ChecksumDownloads: 15}
+		if _, err := data.RecordDownloadData(assetName, downloadData); err != nil {
+			t.Fatalf("RecordDownloadData failed: %v", err)
 		}
 
 		expected := [][]string{
@@ -99,9 +101,9 @@ func TestRecordDownloadData(t *testing.T) {
 		file.Close()
 
 		// Now, record today's data
-		newData := DownloadData{AssetDownloads: 200, ChecksumDownloads: 20}
-		if err := recordDownloadData(assetNameForAppend, newData); err != nil {
-			t.Fatalf("recordDownloadData failed: %v", err)
+		newData := data.DownloadData{AssetDownloads: 200, ChecksumDownloads: 20}
+		if _, err := data.RecordDownloadData(assetNameForAppend, newData); err != nil {
+			t.Fatalf("RecordDownloadData failed: %v", err)
 		}
 
 		expected := [][]string{
@@ -133,7 +135,7 @@ func TestGenerateStatistics(t *testing.T) {
 		"asset-11": 50,
 	}
 
-	err := generateStatistics(assetDownloads)
+	err := data.GenerateStatistics(assetDownloads)
 	if err != nil {
 		t.Fatalf("generateStatistics failed: %v", err)
 	}
@@ -146,7 +148,7 @@ func TestGenerateStatistics(t *testing.T) {
 	defer os.Remove("daily_stats.txt")
 
 			expectedContent := "Total asset downloads today: 2800\n\n" +
-			"Top 10 assets by download count:\n" +
+			"Top 10 assets by daily download count:\n" +
 			"- asset-7: 500\n" +
 			"- asset-10: 450\n" +
 			"- asset-8: 400\n" +
