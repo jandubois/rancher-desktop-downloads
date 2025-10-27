@@ -5,53 +5,69 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"rancher-desktop-downloads/internal/data"
+	"strings"
 	"testing"
 )
 
+var ( mockServer *httptest.Server)
+
 func TestMain(m *testing.M) {
-	// Mock the API server
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	mockServer = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(`{
-			"analytics": {
-				"install": {
-					"30d": {
-						"rancher": 1234
-					},
-					"90d": {
-						"rancher": 5678
-					},
-					"365d": {
-						"rancher": 91011
-					}
+		if strings.HasPrefix(r.URL.Path, "/api/cask") {
+			w.Write([]byte(`{
+				"analytics": {
+					"30d": [{"date": "2025-10-26", "count": 1234}],
+					"90d": [{"date": "2025-10-26", "count": 5678}],
+					"365d": [{"date": "2025-10-26", "count": 91011}]
 				}
-			}
-		}`))
+			}`))
+		} else if strings.HasPrefix(r.URL.Path, "/api/formula") {
+			w.Write([]byte(`{
+				"analytics": {
+					"30d": [{"date": "2025-10-26", "count": 4321}],
+					"90d": [{"date": "2025-10-26", "count": 8765}],
+					"365d": [{"date": "2025-10-26", "count": 11019}]
+				}
+			}`))
+		}
 	}))
-	defer server.Close()
+	originalURL := brewAPIBaseURL
+	brewAPIBaseURL = mockServer.URL + "/api"
 
-	// Override the API URL to point to the mock server
-	originalURL := brewAPIURL
-	brewAPIURL = server.URL
-	defer func() { brewAPIURL = originalURL }()
+	code := m.Run()
 
-	// Run the tests
-	os.Exit(m.Run())
+	brewAPIBaseURL = originalURL
+	mockServer.Close()
+
+	os.Exit(code)
 }
 
-func TestFetchCaskData(t *testing.T) {
-	cask, err := fetchCaskData()
+func TestFetchAnalyticsData(t *testing.T) {
+	caskPkg := homebrewPackage{Name: "rancher", Type: "cask"}
+	caskAnalytics, err := fetchAnalyticsData(caskPkg)
 	if err != nil {
-		t.Fatalf("fetchCaskData failed: %v", err)
+		t.Fatalf("fetchAnalyticsData for cask failed: %v", err)
+	}
+	if totalDownloads(caskAnalytics.Analytics.Downloads30d) != 1234 {
+		t.Errorf("Expected 30d count for cask to be 1234, but got %d", totalDownloads(caskAnalytics.Analytics.Downloads30d))
 	}
 
-	if cask.Analytics.Install.ThirtyDays["rancher"] != 1234 {
-		t.Errorf("Expected 30d count to be 1234, but got %d", cask.Analytics.Install.ThirtyDays["rancher"])
+	formulaPkg := homebrewPackage{Name: "lima", Type: "formula"}
+	formulaAnalytics, err := fetchAnalyticsData(formulaPkg)
+	if err != nil {
+		t.Fatalf("fetchAnalyticsData for formula failed: %v", err)
 	}
-	if cask.Analytics.Install.NinetyDays["rancher"] != 5678 {
-		t.Errorf("Expected 90d count to be 5678, but got %d", cask.Analytics.Install.NinetyDays["rancher"])
+	if totalDownloads(formulaAnalytics.Analytics.Downloads30d) != 4321 {
+		t.Errorf("Expected 30d count for formula to be 4321, but got %d", totalDownloads(formulaAnalytics.Analytics.Downloads30d))
 	}
-	if cask.Analytics.Install.ThreeHundredSixtyFiveDays["rancher"] != 91011 {
-		t.Errorf("Expected 365d count to be 91011, but got %d", cask.Analytics.Install.ThreeHundredSixtyFiveDays["rancher"])
+}
+
+func totalDownloads(downloads []data.BrewDownloadCount) int {
+	total := 0
+	for _, dl := range downloads {
+		total += dl.Count
 	}
+	return total
 }

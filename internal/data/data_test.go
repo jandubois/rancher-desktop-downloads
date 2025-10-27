@@ -117,77 +117,45 @@ func TestRecordDownloadData(t *testing.T) {
 
 func TestRecordBrewAnalytics(t *testing.T) {
 	tempDir := t.TempDir()
-	// Override the BrewCSV for testing purposes
-	originalBrewCSV := data.BrewCSV
-	data.BrewCSV = filepath.Join(tempDir, "homebrew_analytics.csv")
-	t.Cleanup(func() { data.BrewCSV = originalBrewCSV })
+	originalDataDir := data.DataDir
+	data.DataDir = tempDir
+	t.Cleanup(func() { data.DataDir = originalDataDir })
 	today := time.Now().In(data.RecordTZ).Format("2006-01-02")
-	yesterday := time.Now().In(data.RecordTZ).AddDate(0, 0, -1).Format("2006-01-02")
-	filePath := filepath.Join(tempDir, "homebrew_analytics.csv")
 
-	t.Run("NewFile", func(t *testing.T) {
-		analytics := data.BrewAnalytics{}
-		analytics.Install.ThirtyDays = map[string]int{"rancher": 100}
-		analytics.Install.NinetyDays = map[string]int{"rancher": 200}
-		analytics.Install.ThreeHundredSixtyFiveDays = map[string]int{"rancher": 300}
+	t.Run("Cask", func(t *testing.T) {
+		analytics := data.BrewAnalytics{
+			Downloads30d:  []data.BrewDownloadCount{{Date: today, Count: 100}},
+			Downloads90d:  []data.BrewDownloadCount{{Date: today, Count: 200}},
+			Downloads365d: []data.BrewDownloadCount{{Date: today, Count: 300}},
+		}
 
-		if err := data.RecordBrewAnalytics(analytics); err != nil {
-			t.Fatalf("RecordBrewAnalytics failed: %v", err)
+		if err := data.RecordBrewAnalytics("rancher", "cask", analytics); err != nil {
+			t.Fatalf("RecordBrewAnalytics for cask failed: %v", err)
 		}
 
 		expected := [][]string{
 			{"date", "30d", "90d", "365d"},
 			{today, "100", "200", "300"},
 		}
-		checkCSV(t, filePath, expected)
+		checkCSV(t, filepath.Join(tempDir, "rancher-cask.csv"), expected)
 	})
 
-	t.Run("ReplaceData", func(t *testing.T) {
-		// This should replace the line from the previous test
-		analytics := data.BrewAnalytics{}
-		analytics.Install.ThirtyDays = map[string]int{"rancher": 150}
-		analytics.Install.NinetyDays = map[string]int{"rancher": 250}
-		analytics.Install.ThreeHundredSixtyFiveDays = map[string]int{"rancher": 350}
+	t.Run("Formula", func(t *testing.T) {
+		analytics := data.BrewAnalytics{
+			Downloads30d:  []data.BrewDownloadCount{{Date: today, Count: 400}},
+			Downloads90d:  []data.BrewDownloadCount{{Date: today, Count: 500}},
+			Downloads365d: []data.BrewDownloadCount{{Date: today, Count: 600}},
+		}
 
-		if err := data.RecordBrewAnalytics(analytics); err != nil {
-			t.Fatalf("RecordBrewAnalytics failed: %v", err)
+		if err := data.RecordBrewAnalytics("lima", "formula", analytics); err != nil {
+			t.Fatalf("RecordBrewAnalytics for formula failed: %v", err)
 		}
 
 		expected := [][]string{
 			{"date", "30d", "90d", "365d"},
-			{today, "150", "250", "350"},
+			{today, "400", "500", "600"},
 		}
-		checkCSV(t, filePath, expected)
-	})
-
-	t.Run("AppendData", func(t *testing.T) {
-		// To test appending, we need to manually create a file with an older date
-		initialRecords := [][]string{
-			{"date", "30d", "90d", "365d"},
-			{yesterday, "50", "100", "150"},
-		}
-		file, _ := os.Create(filePath)
-		writer := csv.NewWriter(file)
-		writer.WriteAll(initialRecords)
-		writer.Flush()
-		file.Close()
-
-		// Now, record today's data
-		analytics := data.BrewAnalytics{}
-		analytics.Install.ThirtyDays = map[string]int{"rancher": 200}
-		analytics.Install.NinetyDays = map[string]int{"rancher": 300}
-		analytics.Install.ThreeHundredSixtyFiveDays = map[string]int{"rancher": 400}
-
-		if err := data.RecordBrewAnalytics(analytics); err != nil {
-			t.Fatalf("RecordBrewAnalytics failed: %v", err)
-		}
-
-		expected := [][]string{
-			{"date", "30d", "90d", "365d"},
-			{yesterday, "50", "100", "150"},
-			{today, "200", "300", "400"},
-		}
-		checkCSV(t, filePath, expected)
+		checkCSV(t, filepath.Join(tempDir, "lima-formula.csv"), expected)
 	})
 }
 
