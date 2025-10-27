@@ -51,8 +51,8 @@ func TestRecordDownloadData(t *testing.T) {
 	data.DataDir = tempDir
 	t.Cleanup(func() { data.DataDir = originalDataDir })
 
-	today := time.Now().In(data.PacificTZ).Format("2006-01-02")
-	yesterday := time.Now().In(data.PacificTZ).AddDate(0, 0, -1).Format("2006-01-02")
+	today := time.Now().In(data.RecordTZ).Format("2006-01-02")
+	yesterday := time.Now().In(data.RecordTZ).AddDate(0, 0, -1).Format("2006-01-02")
 
 	assetName := "test-asset-1.0.0.zip"
 	filePath := filepath.Join(tempDir, assetName+".csv")
@@ -121,8 +121,8 @@ func TestRecordBrewAnalytics(t *testing.T) {
 	originalBrewCSV := data.BrewCSV
 	data.BrewCSV = filepath.Join(tempDir, "homebrew_analytics.csv")
 	t.Cleanup(func() { data.BrewCSV = originalBrewCSV })
-	today := time.Now().In(data.PacificTZ).Format("2006-01-02")
-	yesterday := time.Now().In(data.PacificTZ).AddDate(0, 0, -1).Format("2006-01-02")
+	today := time.Now().In(data.RecordTZ).Format("2006-01-02")
+	yesterday := time.Now().In(data.RecordTZ).AddDate(0, 0, -1).Format("2006-01-02")
 	filePath := filepath.Join(tempDir, "homebrew_analytics.csv")
 
 	t.Run("NewFile", func(t *testing.T) {

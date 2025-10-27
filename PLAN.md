@@ -78,10 +78,10 @@ To make the daily commit messages more informative, the Go script has been enhan
 
 ## 7. Timezone and Schedule
 
-To better capture download data from the Americas, the daily execution time and the timezone used for recording data have been updated.
+To ensure that the daily download data is captured for the correct day, the timezone for recording data has been updated.
 
--   **Schedule:** The GitHub Actions workflow is scheduled to run at midnight Pacific Time (`0 8 * * *` UTC).
--   **Timezone:** The Go script now uses the `America/Los_Angeles` timezone to record the date for the download counts. This ensures that all downloads for a given day in the Americas are attributed to the same day.
+-   **Schedule:** The GitHub Actions workflow is scheduled to run at 8:00 UTC.
+-   **Timezone:** The Go script now uses the `Pacific/Niue` timezone (UTC-11) to record the date for the download counts. This ensures that all downloads for a given day are attributed to the same day, even if the GitHub Action is delayed by several hours.
 
 ## 8. Phase 4: Homebrew Analytics
 

@@ -14,13 +14,15 @@ import (
 var (
 	// DataDir is the directory where the data files are stored.
 	DataDir   = "data"
-	// PacificTZ is the timezone used for the data files.
-	PacificTZ *time.Location
+	// RecordTZ is the timezone used for the data files.
+	// We use Pacific/Niue (UTC-11) to ensure that we always record the data for the previous day,
+	// even if the GitHub Action is delayed by a few hours.
+	RecordTZ *time.Location
 )
 
 func init() {
 	var err error
-	PacificTZ, err = time.LoadLocation("America/Los_Angeles")
+	RecordTZ, err = time.LoadLocation("Pacific/Niue")
 	if err != nil {
 		fmt.Printf("Error loading location: %v\n", err)
 		os.Exit(1)
@@ -42,7 +44,7 @@ type AssetDownloadStat struct {
 // RecordDownloadData writes the download data to the appropriate CSV file and returns the daily download count.
 func RecordDownloadData(assetName string, data DownloadData) (int, error) {
 	filePath := filepath.Join(DataDir, assetName+".csv")
-	today := time.Now().In(PacificTZ).Format("2006-01-02")
+	today := time.Now().In(RecordTZ).Format("2006-01-02")
 	dailyDownloads := 0
 
 	// Read existing data
