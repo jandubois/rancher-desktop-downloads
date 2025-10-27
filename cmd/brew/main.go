@@ -27,6 +27,10 @@ func main() {
 	}
 
 	fmt.Println("Processing Homebrew analytics data...")
+	if err := os.MkdirAll(data.DataDir, 0755); err != nil {
+		fmt.Printf("Error creating data directory: %v\n", err)
+		os.Exit(1)
+	}
 	if err := data.RecordBrewAnalytics(cask.Analytics); err != nil {
 		fmt.Printf("Error recording analytics: %v\n", err)
 		os.Exit(1)

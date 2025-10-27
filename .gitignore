@@ -17,3 +17,5 @@ go.work
 # Compiled binaries
 github_analytics
 brew_analytics
+data/
+
