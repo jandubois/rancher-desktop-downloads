@@ -1,119 +1,84 @@
-# Rancher Desktop Download Counter Project Plan
+# Rancher Desktop Download Counter Project
 
-This document outlines the plan to create a system for tracking the download counts of Rancher Desktop release assets over time.
+This document describes the system for tracking the download counts of Rancher Desktop release assets over time.
 
 ## 1. Goal
 
-The primary goal is to collect daily download statistics for Rancher Desktop release assets to enable trend analysis. Since GitHub only provides cumulative counts, this project will create a historical record of those counts.
+The primary goal is to collect daily download statistics for Rancher Desktop release assets to enable trend analysis. Since GitHub only provides cumulative counts, this project creates a historical record of those counts.
 
-## 2. High-Level Approach
+## 2. System Architecture
 
-A Go program will be executed daily to fetch download counts from the GitHub API. The results will be stored in CSV files. A GitHub Action will be used to automate this process.
+### 2.1. Overview
 
-## 3. Git Branching Model
+The system consists of two Go programs that are executed daily by a GitHub Actions workflow:
 
-The project uses a two-branch model to separate the application code from the data.
+-   `cmd/github/main.go`: Fetches download counts for Rancher Desktop release assets from the GitHub API.
+-   `cmd/brew/main.go`: Fetches installation analytics for the Rancher Desktop Homebrew cask from the Homebrew API.
 
--   **`main` branch:** Contains the Go program (`main.go`) and the GitHub Actions workflow.
--   **`data` branch:** Contains the collected download data in CSV files and the daily statistics file (`daily_stats.txt`).
+The collected data is stored in CSV files on a separate `data` branch of the repository.
+
+### 2.2. Data Sources
+
+-   **GitHub API**: The system fetches release and asset information from the `rancher-sandbox/rancher-desktop` repository using the GitHub API.
+-   **Homebrew API**: The system fetches Homebrew installation analytics from the `https://formulae.brew.sh/api/cask/rancher.json` endpoint.
+
+### 2.3. Data Storage
+
+All data is stored in CSV files in the `data/` directory on the `data` branch.
+
+### 2.4. Automation
+
+A GitHub Actions workflow in `.github/workflows/daily-download-count.yml` automates the process of fetching and storing the data. The workflow is scheduled to run daily.
+
+## 3. Data Schema
+
+### 3.1. GitHub Download Counts
+
+A separate CSV file is created for each release asset (e.g., `data/rancher-desktop.msi.csv`). Each file contains the following columns:
+
+-   `date`: The date of the data capture (YYYY-MM-DD).
+-   `asset_downloads`: The cumulative download count for the main asset file.
+-   `sha512sum_downloads`: The cumulative download count for the corresponding `.sha512sum` file.
+
+### 3.2. Homebrew Analytics
+
+The Homebrew analytics data is stored in `data/homebrew_analytics.csv`. This file contains the following columns:
+
+-   `date`: The date of data capture (YYYY-MM-DD).
+-   `30d`: The total installations in the last 30 days.
+-   `90d`: The total installations in the last 90 days.
+-   `365d`: The total installations in the last 365 days.
 
 ## 4. Implementation Details
 
-### 4.1. Data Fetching and Asset Selection
+### 4.1. GitHub Analytics
 
--   **Language:** The data-fetching script will be written in Go.
--   **Source:** The script will target the `rancher-sandbox/rancher-desktop` repository and fetch all of its releases, not just the latest one.
--   **Asset Filtering:** For each release, the script will only track release assets that have a corresponding `.sha512sum` file in the same release. This focuses the data collection on the main distributable artifacts and filters out source code archives and other assets.
+The `cmd/github/main.go` program fetches all releases for the `rancher-sandbox/rancher-desktop` repository. For each release, it only tracks release assets that have a corresponding `.sha512sum` file in the same release. This filters out source code archives and other non-essential assets.
 
-### 4.2. Data Storage
+### 4.2. Homebrew Analytics
 
--   **Directory:** All data will be stored in the `data/` directory on the `data` branch.
--   **File Structure:** A separate CSV file will be created for each main asset (e.g., `data/rancher-desktop.msi.csv`).
--   **File Content:** Each CSV file will contain three columns:
-    -   `date`: The date of the data capture (YYYY-MM-DD).
-    -   `asset_downloads`: The cumulative download count for the main asset file.
-    -   `sha512sum_downloads`: The cumulative download count for the corresponding `.sha512sum` file.
+The `cmd/brew/main.go` program fetches the JSON data from the Homebrew API, parses it, and extracts the 30, 90, and 365-day installation counts.
 
-This structure allows for easy manual inspection of the data for a specific asset while also capturing the relationship between the asset and its checksum file downloads.
+### 4.3. Commit Message Generation
 
-## 5. Development Phases
+To make the daily commit messages more informative, the `cmd/github/main.go` program generates statistics about the daily download counts. These statistics are written to `daily_stats.txt` and used as the body of the commit message. The statistics include:
 
-This project was developed in several phases. The initial development is complete, and the project is now in a maintenance phase.
+-   **Total Daily Downloads**: The total number of downloads for all main assets for the current day.
+-   **Top 10 Assets by Daily Downloads**: The top 10 assets with the highest download counts for the current day.
 
-1.  **Phase 1: Local Script Development**
-    - Create this `PLAN.md` document.
-    - Develop the Go script (`main.go`) to implement the data fetching and file writing logic.
-    - Write unit tests for the file writing logic to ensure correctness.
-    - Test the script locally to ensure it correctly fetches data and creates the CSV files.
-    - Create a `.gitignore` file.
+## 5. Operational Details
 
-2.  **Phase 2: GitHub Action Automation**
-    - Create a GitHub Actions workflow file in `.github/workflows/`.
-    - The workflow will trigger on a daily schedule.
-    - The workflow will:
-        - Set up the Go environment.
-        - Check out the `main` branch.
-        - Create a git worktree for the `data` branch in a `data-worktree` directory.
-        - Run the Go script from the `data-worktree` directory.
-        - Commit any changes in the worktree back to the `data` branch.
+### 5.1. Schedule
 
-## 6. Phase 3: Enhanced Commit Messages with Daily Statistics
+The GitHub Actions workflow is scheduled to run daily at 8:00 UTC.
 
-To make the daily commit messages more informative, the Go script has been enhanced to generate statistics about the daily download counts. These statistics are used in the body of the commit message.
+### 5.2. Timezone
 
-### 6.1. Statistics to Collect
+The Go scripts use the `Pacific/Niue` timezone (UTC-11) to record the date for the download counts. This ensures that all downloads for a given day are attributed to the same day, even if the GitHub Action is delayed by several hours.
 
--   **Total Daily Downloads:** The script calculates the total number of downloads for all main assets (excluding `.sha512sum` files) for the current day.
--   **Top 10 Assets by Daily Downloads:** The script identifies the top 10 assets with the highest download counts for the current day.
+### 5.3. Git Branching Model
 
-### 6.2. Implementation Details
+The project uses a two-branch model to separate the application code from the data:
 
-1.  **Go Script Modifications:**
-    - The `recordDownloadData` function was updated to calculate the daily download count by subtracting the previous day's total downloads.
-    - The `main` function was updated to collect these daily download counts.
-    - The `generateStatistics` function was updated to work with daily download counts.
-    - The script writes these statistics to a new file, `daily_stats.txt`, in the `data` branch.
-
-2.  **GitHub Actions Workflow Modifications:**
-    - The workflow is updated to read the content of `daily_stats.txt` from the worktree.
-    - The content of the file is used as the body of the commit message.
-
-## 7. Timezone and Schedule
-
-To ensure that the daily download data is captured for the correct day, the timezone for recording data has been updated.
-
--   **Schedule:** The GitHub Actions workflow is scheduled to run at 8:00 UTC.
--   **Timezone:** The Go script now uses the `Pacific/Niue` timezone (UTC-11) to record the date for the download counts. This ensures that all downloads for a given day are attributed to the same day, even if the GitHub Action is delayed by several hours.
-
-## 8. Phase 4: Homebrew Analytics
-
-To gain more insight into the distribution of Rancher Desktop, this phase will focus on collecting and storing Homebrew installation analytics.
-
-### 8.1. Goal
-
-The goal of this phase is to track the installation trends of Rancher Desktop on Homebrew over time.
-
-### 8.2. Data Source
-
-The analytics data will be fetched from the Homebrew API. The data is available in a JSON file for each cask. For Rancher Desktop, the URL is `https://formulae.brew.sh/api/cask/rancher.json`.
-
-The API provides the total number of installations over sliding windows of 30, 90, and 365 days. It is not possible to derive daily download numbers from this data. The data is also aggregated and does not provide a breakdown by platform or architecture.
-
-### 8.3. Implementation Details
-
-1.  **Go Program:**
-    -   A Go program, `cmd/brew/main.go`, fetches and processes the Homebrew analytics data.
-    -   The program fetches the JSON data from the Homebrew API.
-    -   It parses the JSON and extracts the 30, 90, and 365-day installation counts.
-
-2.  **Data Storage:**
-    -   The data is stored in a new CSV file, `data/homebrew_analytics.csv`.
-    -   The CSV file has the following columns:
-        -   `date`: The date of data capture (YYYY-MM-DD).
-        -   `30d`: The total installations in the last 30 days.
-        -   `90d`: The total installations in the last 90 days.
-        -   `365d`: The total installations in the last 365 days.
-
-3.  **GitHub Actions Workflow Modifications:**
-    -   The existing GitHub Actions workflow runs the `cmd/brew/main.go` program daily.
-    -   The workflow commits the updated `data/homebrew_analytics.csv` file to the `data` branch.
+-   **`main` branch:** Contains the Go programs and the GitHub Actions workflow.
+-   **`data` branch:** Contains the collected download data in CSV files and the daily statistics file (`daily_stats.txt`).
