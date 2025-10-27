@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-const (
+var (
 	// BrewCSV is the path to the brew analytics csv file.
 	BrewCSV = "data/homebrew_analytics.csv"
 )

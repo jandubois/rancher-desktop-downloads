@@ -16,6 +16,7 @@ var (
 	repoOwner      = "rancher-sandbox"
 	repoName       = "rancher-desktop"
 	sha512sumSuffix = ".sha512sum"
+	apiURL = fmt.Sprintf("https://api.github.com/repos/%s/%s/releases", repoOwner, repoName)
 )
 
 // Release represents a GitHub release.
@@ -65,7 +66,6 @@ func main() {
 
 // fetchReleases fetches all releases from the GitHub API.
 func fetchReleases() ([]Release, error) {
-	apiURL := fmt.Sprintf("https://api.github.com/repos/%s/%s/releases", repoOwner, repoName)
 	resp, err := http.Get(apiURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get release data: %w", err)

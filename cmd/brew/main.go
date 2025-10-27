@@ -9,7 +9,7 @@ import (
 	"rancher-desktop-downloads/internal/data"
 )
 
-const (
+var (
 	brewAPIURL = "https://formulae.brew.sh/api/cask/rancher.json"
 )
 

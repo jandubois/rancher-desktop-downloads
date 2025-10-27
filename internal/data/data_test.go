@@ -115,6 +115,83 @@ func TestRecordDownloadData(t *testing.T) {
 	})
 }
 
+func TestRecordBrewAnalytics(t *testing.T) {
+	tempDir := t.TempDir()
+	// Override the BrewCSV for testing purposes
+	originalBrewCSV := data.BrewCSV
+	data.BrewCSV = filepath.Join(tempDir, "homebrew_analytics.csv")
+	t.Cleanup(func() { data.BrewCSV = originalBrewCSV })
+	today := time.Now().In(data.PacificTZ).Format("2006-01-02")
+	yesterday := time.Now().In(data.PacificTZ).AddDate(0, 0, -1).Format("2006-01-02")
+	filePath := filepath.Join(tempDir, "homebrew_analytics.csv")
+
+	t.Run("NewFile", func(t *testing.T) {
+		analytics := data.BrewAnalytics{}
+		analytics.Install.ThirtyDays = map[string]int{"rancher": 100}
+		analytics.Install.NinetyDays = map[string]int{"rancher": 200}
+		analytics.Install.ThreeHundredSixtyFiveDays = map[string]int{"rancher": 300}
+
+		if err := data.RecordBrewAnalytics(analytics); err != nil {
+			t.Fatalf("RecordBrewAnalytics failed: %v", err)
+		}
+
+		expected := [][]string{
+			{"date", "30d", "90d", "365d"},
+			{today, "100", "200", "300"},
+		}
+		checkCSV(t, filePath, expected)
+	})
+
+	t.Run("ReplaceData", func(t *testing.T) {
+		// This should replace the line from the previous test
+		analytics := data.BrewAnalytics{}
+		analytics.Install.ThirtyDays = map[string]int{"rancher": 150}
+		analytics.Install.NinetyDays = map[string]int{"rancher": 250}
+		analytics.Install.ThreeHundredSixtyFiveDays = map[string]int{"rancher": 350}
+
+		if err := data.RecordBrewAnalytics(analytics); err != nil {
+			t.Fatalf("RecordBrewAnalytics failed: %v", err)
+		}
+
+		expected := [][]string{
+			{"date", "30d", "90d", "365d"},
+			{today, "150", "250", "350"},
+		}
+		checkCSV(t, filePath, expected)
+	})
+
+	t.Run("AppendData", func(t *testing.T) {
+		// To test appending, we need to manually create a file with an older date
+		initialRecords := [][]string{
+			{"date", "30d", "90d", "365d"},
+			{yesterday, "50", "100", "150"},
+		}
+		file, _ := os.Create(filePath)
+		writer := csv.NewWriter(file)
+		writer.WriteAll(initialRecords)
+		writer.Flush()
+		file.Close()
+
+		// Now, record today's data
+		analytics := data.BrewAnalytics{}
+		analytics.Install.ThirtyDays = map[string]int{"rancher": 200}
+		analytics.Install.NinetyDays = map[string]int{"rancher": 300}
+		analytics.Install.ThreeHundredSixtyFiveDays = map[string]int{"rancher": 400}
+
+		if err := data.RecordBrewAnalytics(analytics); err != nil {
+			t.Fatalf("RecordBrewAnalytics failed: %v", err)
+		}
+
+		expected := [][]string{
+			{"date", "30d", "90d", "365d"},
+			{yesterday, "50", "100", "150"},
+			{today, "200", "300", "400"},
+		}
+		checkCSV(t, filePath, expected)
+	})
+}
+
+
 // We need to make a small change to recordDownloadData to allow the test to override the dataDir.
 // The original function is fine, but for testing this is a common pattern.
 // The alternative is to pass dataDir as an argument, which is a bigger change.
