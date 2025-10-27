@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
-	"rancher-desktop-downloads/internal/data"
 	"strings"
 	"testing"
 )
@@ -18,17 +17,21 @@ func TestMain(m *testing.M) {
 		if strings.HasPrefix(r.URL.Path, "/api/cask") {
 			w.Write([]byte(`{
 				"analytics": {
-					"30d": [{"date": "2025-10-26", "count": 1234}],
-					"90d": [{"date": "2025-10-26", "count": 5678}],
-					"365d": [{"date": "2025-10-26", "count": 91011}]
+					"install": {
+						"30d": {"rancher": 1234},
+						"90d": {"rancher": 5678},
+						"365d": {"rancher": 91011}
+					}
 				}
 			}`))
 		} else if strings.HasPrefix(r.URL.Path, "/api/formula") {
 			w.Write([]byte(`{
 				"analytics": {
-					"30d": [{"date": "2025-10-26", "count": 4321}],
-					"90d": [{"date": "2025-10-26", "count": 8765}],
-					"365d": [{"date": "2025-10-26", "count": 11019}]
+					"install": {
+						"30d": {"lima": 4321},
+						"90d": {"lima": 8765},
+						"365d": {"lima": 11019}
+					}
 				}
 			}`))
 		}
@@ -50,8 +53,8 @@ func TestFetchAnalyticsData(t *testing.T) {
 	if err != nil {
 		t.Fatalf("fetchAnalyticsData for cask failed: %v", err)
 	}
-	if totalDownloads(caskAnalytics.Analytics.Downloads30d) != 1234 {
-		t.Errorf("Expected 30d count for cask to be 1234, but got %d", totalDownloads(caskAnalytics.Analytics.Downloads30d))
+	if caskAnalytics.Analytics.Install.Downloads30d["rancher"] != 1234 {
+		t.Errorf("Expected 30d count for cask to be 1234, but got %d", caskAnalytics.Analytics.Install.Downloads30d["rancher"])
 	}
 
 	formulaPkg := homebrewPackage{Name: "lima", Type: "formula"}
@@ -59,15 +62,15 @@ func TestFetchAnalyticsData(t *testing.T) {
 	if err != nil {
 		t.Fatalf("fetchAnalyticsData for formula failed: %v", err)
 	}
-	if totalDownloads(formulaAnalytics.Analytics.Downloads30d) != 4321 {
-		t.Errorf("Expected 30d count for formula to be 4321, but got %d", totalDownloads(formulaAnalytics.Analytics.Downloads30d))
+	if formulaAnalytics.Analytics.Install.Downloads30d["lima"] != 4321 {
+		t.Errorf("Expected 30d count for formula to be 4321, but got %d", formulaAnalytics.Analytics.Install.Downloads30d["lima"])
 	}
 }
 
-func totalDownloads(downloads []data.BrewDownloadCount) int {
+func totalDownloads(downloads map[string]int) int {
 	total := 0
-	for _, dl := range downloads {
-		total += dl.Count
+	for _, count := range downloads {
+		total += count
 	}
 	return total
 }

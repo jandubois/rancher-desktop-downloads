@@ -10,15 +10,11 @@ import (
 
 // BrewAnalytics holds the download analytics data from the Homebrew API.
 type BrewAnalytics struct {
-	Downloads30d  []BrewDownloadCount `json:"30d"`
-	Downloads90d  []BrewDownloadCount `json:"90d"`
-	Downloads365d []BrewDownloadCount `json:"365d"`
-}
-
-// BrewDownloadCount holds the download count for a specific day.
-type BrewDownloadCount struct {
-	Date  string `json:"date"`
-	Count int    `json:"count"`
+	Install struct {
+		Downloads30d  map[string]int `json:"30d"`
+		Downloads90d  map[string]int `json:"90d"`
+		Downloads365d map[string]int `json:"365d"`
+	} `json:"install"`
 }
 
 // RecordBrewAnalytics writes the download data to the appropriate CSV file.
@@ -56,9 +52,9 @@ func RecordBrewAnalytics(pkgName, pkgType string, data BrewAnalytics) error {
 	// Append the new record
 	newRecord := []string{
 		today,
-		fmt.Sprintf("%d", totalDownloads(data.Downloads30d)),
-		fmt.Sprintf("%d", totalDownloads(data.Downloads90d)),
-		fmt.Sprintf("%d", totalDownloads(data.Downloads365d)),
+		fmt.Sprintf("%d", data.Install.Downloads30d[pkgName]),
+		fmt.Sprintf("%d", data.Install.Downloads90d[pkgName]),
+		fmt.Sprintf("%d", data.Install.Downloads365d[pkgName]),
 	}
 	records = append(records, newRecord)
 
@@ -76,12 +72,4 @@ func RecordBrewAnalytics(pkgName, pkgType string, data BrewAnalytics) error {
 	}
 
 	return nil
-}
-
-func totalDownloads(downloads []BrewDownloadCount) int {
-	total := 0
-	for _, dl := range downloads {
-		total += dl.Count
-	}
-	return total
 }

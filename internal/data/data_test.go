@@ -123,11 +123,10 @@ func TestRecordBrewAnalytics(t *testing.T) {
 	today := time.Now().In(data.RecordTZ).Format("2006-01-02")
 
 	t.Run("Cask", func(t *testing.T) {
-		analytics := data.BrewAnalytics{
-			Downloads30d:  []data.BrewDownloadCount{{Date: today, Count: 100}},
-			Downloads90d:  []data.BrewDownloadCount{{Date: today, Count: 200}},
-			Downloads365d: []data.BrewDownloadCount{{Date: today, Count: 300}},
-		}
+		analytics := data.BrewAnalytics{}
+		analytics.Install.Downloads30d = map[string]int{"rancher": 100}
+		analytics.Install.Downloads90d = map[string]int{"rancher": 200}
+		analytics.Install.Downloads365d = map[string]int{"rancher": 300}
 
 		if err := data.RecordBrewAnalytics("rancher", "cask", analytics); err != nil {
 			t.Fatalf("RecordBrewAnalytics for cask failed: %v", err)
@@ -141,11 +140,10 @@ func TestRecordBrewAnalytics(t *testing.T) {
 	})
 
 	t.Run("Formula", func(t *testing.T) {
-		analytics := data.BrewAnalytics{
-			Downloads30d:  []data.BrewDownloadCount{{Date: today, Count: 400}},
-			Downloads90d:  []data.BrewDownloadCount{{Date: today, Count: 500}},
-			Downloads365d: []data.BrewDownloadCount{{Date: today, Count: 600}},
-		}
+		analytics := data.BrewAnalytics{}
+		analytics.Install.Downloads30d = map[string]int{"lima": 400}
+		analytics.Install.Downloads90d = map[string]int{"lima": 500}
+		analytics.Install.Downloads365d = map[string]int{"lima": 600}
 
 		if err := data.RecordBrewAnalytics("lima", "formula", analytics); err != nil {
 			t.Fatalf("RecordBrewAnalytics for formula failed: %v", err)
