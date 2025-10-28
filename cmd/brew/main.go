@@ -22,6 +22,12 @@ var (
 		{Name: "podman-desktop", Type: "cask"},
 		{Name: "lima", Type: "formula"},
 		{Name: "colima", Type: "formula"},
+		{Name: "virtualbox", Type: "cask"},
+		{Name: "vagrant", Type: "cask"},
+		{Name: "multipass", Type: "cask"},
+		{Name: "finch", Type: "cask"},
+		{Name: "utm", Type: "cask"},
+		{Name: "qemu", Type: "formula"},
 	}
 )
 
