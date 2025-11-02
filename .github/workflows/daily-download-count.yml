@@ -36,6 +36,11 @@ jobs:
           cd data-worktree
           go run ../cmd/brew/main.go
 
+      - name: Run Chocolatey analytics collector
+        run: |
+          cd data-worktree
+          go run ../cmd/chocolatey/main.go
+
       - name: Show Stats
         run: cat data-worktree/daily_stats.txt
 

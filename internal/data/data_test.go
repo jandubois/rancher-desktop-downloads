@@ -158,11 +158,6 @@ func TestRecordBrewAnalytics(t *testing.T) {
 }
 
 
-// We need to make a small change to recordDownloadData to allow the test to override the dataDir.
-// The original function is fine, but for testing this is a common pattern.
-// The alternative is to pass dataDir as an argument, which is a bigger change.
-// Let's stick with the global override for now as it's confined to the test.
-
 func TestGenerateStatistics(t *testing.T) {
 	assetDownloads := map[string]int{
 		"asset-1": 100,
@@ -205,4 +200,88 @@ func TestGenerateStatistics(t *testing.T) {
 		if string(content) != expectedContent {
 		t.Errorf("Unexpected content in daily_stats.txt.\nGot:\n%s\nExpected:\n%s", string(content), expectedContent)
 	}
+}
+
+func TestRecordChocolateyTotal(t *testing.T) {
+	tempDir := t.TempDir()
+	originalDataDir := data.DataDir
+	data.DataDir = tempDir
+	t.Cleanup(func() { data.DataDir = originalDataDir })
+
+	today := time.Now().In(data.RecordTZ).Format("2006-01-02")
+	packageName := "test-package"
+
+	t.Run("NewFile", func(t *testing.T) {
+		if err := data.RecordChocolateyTotal(packageName, 1000); err != nil {
+			t.Fatalf("RecordChocolateyTotal failed: %v", err)
+		}
+
+		expected := [][]string{
+			{"date", "total_downloads"},
+			{today, "1000"},
+		}
+		checkCSV(t, filepath.Join(tempDir, "chocolatey", packageName+"-total.csv"), expected)
+	})
+
+	t.Run("ReplaceData", func(t *testing.T) {
+		// This should replace the line from the previous test
+		if err := data.RecordChocolateyTotal(packageName, 1500); err != nil {
+			t.Fatalf("RecordChocolateyTotal failed: %v", err)
+		}
+
+		expected := [][]string{
+			{"date", "total_downloads"},
+			{today, "1500"},
+		}
+		checkCSV(t, filepath.Join(tempDir, "chocolatey", packageName+"-total.csv"), expected)
+	})
+}
+
+func TestRecordChocolateyVersion(t *testing.T) {
+	tempDir := t.TempDir()
+	originalDataDir := data.DataDir
+	data.DataDir = tempDir
+	t.Cleanup(func() { data.DataDir = originalDataDir })
+
+	today := time.Now().In(data.RecordTZ).Format("2006-01-02")
+	packageName := "test-package"
+	version := "1.0.0"
+
+	t.Run("NewFile", func(t *testing.T) {
+		if err := data.RecordChocolateyVersion(packageName, version, 100); err != nil {
+			t.Fatalf("RecordChocolateyVersion failed: %v", err)
+		}
+
+		expected := [][]string{
+			{"date", "version_downloads"},
+			{today, "100"},
+		}
+		checkCSV(t, filepath.Join(tempDir, "chocolatey", packageName+"-"+version+".csv"), expected)
+	})
+
+	t.Run("ReplaceData", func(t *testing.T) {
+		// This should replace the line from the previous test
+		if err := data.RecordChocolateyVersion(packageName, version, 150); err != nil {
+			t.Fatalf("RecordChocolateyVersion failed: %v", err)
+		}
+
+		expected := [][]string{
+			{"date", "version_downloads"},
+			{today, "150"},
+		}
+		checkCSV(t, filepath.Join(tempDir, "chocolatey", packageName+"-"+version+".csv"), expected)
+	})
+
+	t.Run("NewVersion", func(t *testing.T) {
+		newVersion := "2.0.0"
+		if err := data.RecordChocolateyVersion(packageName, newVersion, 50); err != nil {
+			t.Fatalf("RecordChocolateyVersion failed: %v", err)
+		}
+
+		expected := [][]string{
+			{"date", "version_downloads"},
+			{today, "50"},
+		}
+		checkCSV(t, filepath.Join(tempDir, "chocolatey", packageName+"-"+newVersion+".csv"), expected)
+	})
 }
