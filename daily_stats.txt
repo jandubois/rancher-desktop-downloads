@@ -1,13 +1,13 @@
-Total asset downloads today: 1579
+Total asset downloads today: 1518
 
 Top 10 assets by daily download count:
-- Rancher.Desktop.Setup.1.22.0.msi: 627
-- Rancher.Desktop-1.22.0-mac.aarch64.zip: 335
-- Rancher.Desktop-1.22.0.aarch64.dmg: 313
-- Rancher.Desktop-1.22.0-mac.x86_64.zip: 104
-- Rancher.Desktop-1.22.0.x86_64.dmg: 47
-- Rancher.Desktop-1.20.0.aarch64.dmg: 8
-- Rancher.Desktop.Setup.1.21.0.msi: 8
-- Rancher.Desktop.Setup.1.12.3.msi: 5
-- rancher-desktop-linux-v1.22.0.zip: 5
-- Rancher.Desktop-1.21.0.aarch64.dmg: 4
+- Rancher.Desktop.Setup.1.22.0.msi: 597
+- Rancher.Desktop-1.22.0.aarch64.dmg: 302
+- Rancher.Desktop-1.22.0-mac.aarch64.zip: 294
+- Rancher.Desktop-1.22.0-mac.x86_64.zip: 101
+- Rancher.Desktop-1.22.0.x86_64.dmg: 66
+- Rancher.Desktop.Setup.1.17.1.msi: 4
+- Rancher.Desktop.Setup.1.19.3.msi: 4
+- Rancher.Desktop.Setup.1.20.0.msi: 4
+- Rancher.Desktop.Setup.1.21.0.msi: 4
+- Rancher.Desktop-1.19.3.x86_64.dmg: 3
